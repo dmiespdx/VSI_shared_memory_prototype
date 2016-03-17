@@ -1,4 +1,27 @@
-## Vehicle Signal Interface Shared Memory Prototype
+# VSI_shared_memory_prototype
+
+Code to demonstrate the feasibility of using shared memory for interprocess
+communications for the Vehicle Signal Interface project.
+
+### Reasons for this Prototype
+
+When work was started on the problem of interfacing the existing automobile
+signals with higher level software programs that will need access to various
+combinations of signals.  The existing "automotive-message-broker" software
+that attempts to perform this function utilizes the Linux D-Bus system as it's
+message transport interface so it was logical to do some performance
+measurements on the D-Bus system.  When this was done, it showed that the
+D-Bus system could only handle on the order of 30,000 messages per second (on
+hardware comparable to that used for this test - See below for hardware
+specifications).
+
+Looking at the CAN database on a production model vehicle resulted in the
+identification of approximately 1500 individual signals defined in the
+database which could easily result in upwards of 50,000 signals per second
+being presented on the CAN bus.  This CAN message rate would obviously swamp
+the capabilities of the existing D-Bus transport system being used by the AMB
+so an alternative needed to be explored.  This prototype is one of those
+alternative message transport mechanisms.
 
 ### Overview
 
@@ -87,3 +110,61 @@ fire up the tests with any combination of readers and writers that they like.
 From the testing that has been done so far, the throughput of the readers and
 writers is virtually identical but others can test it for themselves.
 
+### Results
+
+Running the above programs on my laptop produced the following results:
+
+#### Hardware
+
+	System Information
+		Manufacturer: Dell Inc.
+		Product Name: Latitude E7450
+
+	Processor Information
+		Family: Core i7
+		Manufacturer: Intel(R) Corporation
+		Signature: Type 0, Family 6, Model 61, Stepping 4
+		Version: Intel(R) Core(TM) i7-5600U CPU @ 2.60GHz
+		Max Speed: 2600 MHz
+		Current Speed: 2600 MHz
+		Core Count: 2
+		Core Enabled: 2
+		Thread Count: 4
+		Characteristics:
+			64-bit capable
+			Multi-Core
+			Hardware Thread
+			Execute Protection
+			Enhanced Virtualization
+			Power/Performance Control
+
+	Memory Array Mapped Address
+		Starting Address: 0x00000000000
+		Ending Address: 0x001FFFFFFFF
+		Range Size: 8 GB
+
+	Disk Information
+		SAMSUNG SSD PM871 mSATA 512GB (EMT42D0Q)
+
+#### Timing
+
+Typical:
+
+1,000,000 records in 31,053,184 nsec. 31 msec.
+	32,202,816 records/sec - Avg: 32,177,772 records/sec
+
+Approximately the same performance was observed for both the "write" and
+"fetch" programs.
+
+Obviously the timing results are highly dependent on the hardware platform
+that the code is run on so everyone running these tests is likely to observe
+different performance numbers.
+
+However, it seems safe to say that we can expect significantly higher
+performance from a shared memory implementation than the existing D-Bus
+implementations being used by systems like automotive-message-broker.
+
+The system was run with the default of one million messages per iteration with
+30 processes running (half write and half fetch processes) for over an hour
+and there was no corruption of any of the records in the shared memory
+segment.
